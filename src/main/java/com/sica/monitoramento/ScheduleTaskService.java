@@ -7,17 +7,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
+import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.stereotype.Service;
 
-import com.sica.repository.InstrumentoMonitoramentoRepository;
-import com.sica.repository.MedicaoInstrumentoRepository;
 import com.sica.service.dto.InstrumentoMonitoramentoDTO;
 
 @Service
@@ -30,30 +26,22 @@ public class ScheduleTaskService {
 	// A map for keeping scheduled tasks
 	Map<String, ScheduledFuture<?>> jobsMap = new HashMap<>();
 
-	@Autowired
-	private InstrumentoMonitoramentoRepository instrumentoMonitoramentoRepository;
-
-	@Autowired
-	private MedicaoInstrumentoRepository medicaoInstrumentoRepository;
-
 	public ScheduleTaskService(TaskScheduler scheduler) {
 		this.scheduler = scheduler;
 	}
 
 	public void addTaskToScheduler(InstrumentoMonitoramentoDTO instrumentoMonitoramento) {
-		LeitorInstrumentosMonitoramentoService task = leitorInstrumentosMonitoramentoService(
-				instrumentoMonitoramento.getIdentificao(), instrumentoMonitoramento.getUrlGetMedicao());
+		LeitorInstrumentosMonitoramentoService task = get();
+		task.setApi(instrumentoMonitoramento.getUrlGetMedicao());
+		task.setIdentificador(instrumentoMonitoramento.getIdentificao());
 		ScheduledFuture<?> scheduledTask = scheduler.schedule(task,
 				new PeriodicTrigger(instrumentoMonitoramento.getIntervaloMedicaoAPI().longValue(), TimeUnit.SECONDS));
 		jobsMap.put(instrumentoMonitoramento.getIdentificao(), scheduledTask);
 	}
 
-	@Bean
-	@Scope("prototype")
-	public LeitorInstrumentosMonitoramentoService leitorInstrumentosMonitoramentoService(String identificador,
-			String api) {
-		return new LeitorInstrumentosMonitoramentoService(identificador, api, instrumentoMonitoramentoRepository,
-				medicaoInstrumentoRepository);
+	@Lookup
+	public LeitorInstrumentosMonitoramentoService get() {
+		return null;
 	}
 
 	@RabbitHandler
