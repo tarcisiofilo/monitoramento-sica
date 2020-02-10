@@ -11,6 +11,7 @@ spring:
     password: ${JDBC_DATABASE_PASSWORD}
     hikari:
       maximumPoolSize: 8
+      auto-commit: false
   jpa:
     database-platform: io.github.jhipster.domain.util.FixedPostgreSQL95Dialect
     database: POSTGRESQL
